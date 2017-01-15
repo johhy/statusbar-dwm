@@ -59,7 +59,7 @@ do
 	TOP="Wlan0:$WLAN0  Vol:$VOLUME  Kbd:$KBD  $DATE"
 	
 	# stat for memory, disk usage ans cpu load
-	MEMORY=$(free -m|grep Mem|awk '{print $4}')
+	MEMORY=$(free -m|grep '-'|awk '{print $4}')
 	DISK=$(df -h|grep "^/"|awk '{print $2-$3}')
 	CPU=$(cut -d ' ' -f1 < /proc/loadavg)
 	
