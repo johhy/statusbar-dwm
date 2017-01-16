@@ -10,12 +10,12 @@
 ########################################################
 
 
-function human_readable {
+function metric {
         VALUE=$1
         BIGGIFIERS=( B K M G )
         CURRENT_BIGGIFIER=0
-        while [ $VALUE -gt 10000 ] ;do
-                VALUE=$(($VALUE/1000))
+        while [ "$VALUE" -gt 10000 ] ;do
+                VALUE=$((VALUE/1000))
                 CURRENT_BIGGIFIER=$((CURRENT_BIGGIFIER+1))
         done
         echo "$VALUE${BIGGIFIERS[$CURRENT_BIGGIFIER]}"
@@ -40,9 +40,10 @@ do
 		"00001004") KBD="RU" ;;
 		*) KBD="unknown" ;;
 	esac
-	if [ -n "$(ip addr|grep wlan0|grep UP)" ];then
+	if ip addr | grep -q 'wlan0.*UP'
+  then
 	    WLAN0="UP"
-      [ -z $OUT_IP ] && OUT_IP=$(curl ipinfo.io/ip)
+      [ -z $OUT_IP ] && OUT_IP=$(curl -s ipinfo.io/ip)
 		  [ -z $LOCAL_IP ] && LOCAL_IP=$(ip addr|grep wlan0|grep inet|awk '{print $2}')
 	else 
 	    WLAN0="DOWN"
@@ -65,12 +66,12 @@ do
 	
 	# net stat
 	LINE=$(grep wlan0 /proc/net/dev | sed s/.*://)
-	RECEIVED2=$(echo $LINE | awk '{print $1}')
-	TRANSMITTED2=$(echo $LINE | awk '{print $9}')
+	RECEIVED2=$(echo "$LINE" | awk '{print $1}')
+	TRANSMITTED2=$(echo "$LINE" | awk '{print $9}')
 	TOTAL=$((RECEIVED2+TRANSMITTED2))
-	TR=$(human_readable "$TRANSMITTED2")
-	RS=$(human_readable "$RECEIVED2")
-	TT=$(human_readable $TOTAL)
+	TR=$(metric "$TRANSMITTED2")
+	RS=$(metric "$RECEIVED2")
+	TT=$(metric $TOTAL)
 	INSPEED=$(((RECEIVED2-RECEIVED1)/(SLP*1024)))
 	OUTSPEED=$(((TRANSMITTED2-TRANSMITTED1)/(SLP*1024)))
 	# set bottom bar
