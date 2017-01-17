@@ -21,12 +21,28 @@ function metric {
         echo "$VALUE${BIGGIFIERS[$CURRENT_BIGGIFIER]}"
 }
 
+function get_weather {
+    CITY=Novosibirsk
+    TEMP=$(curl -s "http://api.openweathermap.org/data/2.5/weather?q=$CITY&appid=$OWM_KEY&units=metric"|awk -F ":" 'match($0,/"temp":[-|+]*[0-9]+/) {a=substr($0,RSTART,RLENGTH);b=substr(a,8,RLENGTH);print b}')
+    echo "$TEMP C"
+}
+
+#set key api from argument of script 
+OWM_KEY=$1
+TMP=$(get_weather)
+
 #set init values for net
 TRANSMITTED1=0
 RECEIVED1=0
 
-#Timeout for update
+#Timeout for update sec
 SLP=1
+
+#Timout between get_weather request sec
+GWT=$((60*60))
+
+#Init time for timer
+LAST_T=$(date +%s)
 
 #IP 
 OUT_IP=""
@@ -35,6 +51,11 @@ LOCAL_IP=""
 while(true)
 do 
 	sleep $SLP
+
+  CURRENT_T=$(date +%s)
+  #check for weather request
+  [ $((CURRENT_T-LAST_T)) -gt $GWT ] && TMP=$(get_weather) && LAST_T=$CURRENT_T
+ 
 	case "$(xset -q|grep LED| awk '{ print $10 }')" in
 		"00000000") KBD="EN" ;;
 		"00001004") KBD="RU" ;;
@@ -52,12 +73,13 @@ do
   fi
 
 	DATE=$(date +"%a %b %d %T")
-	VOLUME=$(awk -F "[][]" '{print $2}' <(amixer sget Master|grep Right:))        
+	VOLUME=$(awk -F "[][]" '{print $2}' <(amixer sget Master|grep Right:))
 	MUTE=$(awk -F "[][]" '{print $4}' <(amixer sget Master|grep Right:))
 	if [ "$MUTE" == "off" ];then 
 		VOLUME=$MUTE
 	fi
-	TOP="Wlan0:$WLAN0  Vol:$VOLUME  Kbd:$KBD  $DATE"
+  
+	TOP="Wlan0:$WLAN0 Vol:$VOLUME Kbd:$KBD T:$TMP $DATE"
 	
 	# stat for memory, disk usage ans cpu load
 	MEMORY=$(free -m|grep '-'|awk '{print $4}')
