@@ -14,11 +14,11 @@ function metric {
         VALUE=$1
         BIGGIFIERS=( B K M G )
         CURRENT_BIGGIFIER=0
-        while [ "$VALUE" -gt 10000 ] ;do
+        while [ "$VALUE" -gt 1000 ] ;do
                 VALUE=$((VALUE/1000))
                 CURRENT_BIGGIFIER=$((CURRENT_BIGGIFIER+1))
         done
-        echo "$VALUE${BIGGIFIERS[$CURRENT_BIGGIFIER]}"
+        echo "$VALUE ${BIGGIFIERS[$CURRENT_BIGGIFIER]}"
 }
 
 function get_weather {
@@ -90,14 +90,13 @@ do
 	LINE=$(grep wlan0 /proc/net/dev | sed s/.*://)
 	RECEIVED2=$(echo "$LINE" | awk '{print $1}')
 	TRANSMITTED2=$(echo "$LINE" | awk '{print $9}')
-	TOTAL=$((RECEIVED2+TRANSMITTED2))
 	TR=$(metric "$TRANSMITTED2")
 	RS=$(metric "$RECEIVED2")
-	TT=$(metric $TOTAL)
-	INSPEED=$(((RECEIVED2-RECEIVED1)/(SLP*1024)))
-	OUTSPEED=$(((TRANSMITTED2-TRANSMITTED1)/(SLP*1024)))
+	INSPEED=$(printf "%sit/s" "$(metric $(((RECEIVED2-RECEIVED1)*8/SLP)))") # in bit/sec
+	OUTSPEED=$(printf "%sit/s" "$(metric $(((TRANSMITTED2-TRANSMITTED1)*8/SLP)))") # in bit/sec
+
 	# set bottom bar
-        BOTTOM="IP_L:$LOCAL_IP  IP_O:$OUT_IP  Tran:$TR  Recv:$RS  Tot:$TT  In:$INSPEED KB/s  Out:$OUTSPEED KB/s  CL:$CPU  MF:$MEMORY MB  DF:$DISK GB"
+  BOTTOM="IP_L:$LOCAL_IP  IP_O:$OUT_IP  CPU:$CPU  MF:$MEMORY MB  DF:$DISK GB  Sent:$TR  Recv:$RS  In:$INSPEED  Out:$OUTSPEED" 
 	xsetroot -name "$TOP;$BOTTOM"
 	TRANSMITTED1=$TRANSMITTED2
 	RECEIVED1=$RECEIVED2
